@@ -17,7 +17,7 @@ namespace MrRooster.Pokemon.Controllers
             _logger = logger;
         }
 
-        public async Task<IActionResult> Index(int? peso, int? alturea, string? tipo)
+        public async Task<IActionResult> Index()
         {
             var list = await _pokemonRepository.GetAll();
 

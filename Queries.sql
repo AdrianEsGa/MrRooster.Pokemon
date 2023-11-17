@@ -1,4 +1,6 @@
 
+select * from pokemon
+
 --POKEMON LIST WITH TYPE
 SELECT
 		pokemon.numero_pokedex AS PokemonId,

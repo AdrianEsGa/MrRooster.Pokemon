@@ -34,13 +34,20 @@ FROM
 
         using var connection = _dbContext.CreateConnection();
 
-        return await connection.QueryAsync<PokemonBaseDto, PokemonTypeDto, PokemonBaseDto>(query, (pokemon, type) =>
+        var values = await connection.QueryAsync<PokemonBaseDto, PokemonTypeDto, PokemonBaseDto>(query, (pokemon, type) =>
         {
             pokemon.Types ??= new List<PokemonTypeDto>();
             pokemon.Types.Add(type);
             return pokemon;
         },
         splitOn: "TypeId");
+
+        return values.GroupBy(p => p.PokemonId).Select(g =>
+        {
+            var group = g.First();
+            group.Types = g.Select(p => p.Types.Single()).ToList();
+            return group;
+        }).ToList();
     }
 
     public async Task<IEnumerable<AttackDto>> GetAttacks(int pokemonId)
