@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MRooster.Pokemon.Domain\MRooster.Pokemon.Domain.csproj" />
+    <ProjectReference Include="..\MrRooster.Pokemon.Infrastructure\MrRooster.Pokemon.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
