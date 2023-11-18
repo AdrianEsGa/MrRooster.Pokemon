@@ -1,11 +1,10 @@
-﻿using MRooster.Pokemon.Domain.DTOs;
+﻿using MRooster.Pokemon.Domain.Models;
 
 namespace MRooster.Pokemon.Domain.Abstractions;
 
 public interface IPokemonRepository
 {
-    Task<IEnumerable<PokemonBaseDto>> GetAll();
-    Task<IEnumerable<AttackDto>> GetAttacks(int pokemonId);
-    Task<IEnumerable<EvolutionDto>> GetEvolutions(int pokemonId);
-    Task<PokemonFullDto> GetFull(int pokemonId);
+    Task<IEnumerable<PokemonBase>> GetAll();
+    Task<PokemonFull> GetFull(int pokemonId);
+    Task<PokemonBase> GetBase(int pokemonId);
 }

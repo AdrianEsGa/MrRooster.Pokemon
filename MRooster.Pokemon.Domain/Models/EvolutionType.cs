@@ -1,6 +1,6 @@
-﻿namespace MRooster.Pokemon.Domain.DTOs;
+﻿namespace MRooster.Pokemon.Domain.Models;
 
-public class EvolutionTypeDto
+public class EvolutionType
 {
     public int TypeId { get; set; }
     public string TypeName { get; set; }

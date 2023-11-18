@@ -21,11 +21,7 @@ namespace MrRooster.Pokemon.Controllers
         {
             var list = await _pokemonRepository.GetAll();
 
-            var attacks = await _pokemonRepository.GetAttacks(list.First().PokemonId);
-
-            var evolutions = await _pokemonRepository.GetEvolutions(list.First().PokemonId);
-
-            var full = await _pokemonRepository.GetFull(list.First().PokemonId);
+            var full = await _pokemonRepository.GetFull(3);
 
             return View();
         }

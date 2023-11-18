@@ -1,6 +1,6 @@
 ﻿using Dapper;
 using MRooster.Pokemon.Domain.Abstractions;
-using MRooster.Pokemon.Domain.DTOs;
+using MRooster.Pokemon.Domain.Models;
 
 namespace MrRooster.Pokemon.Infrastructure.Database.Repositories;
 
@@ -13,7 +13,7 @@ public class PokemonRepository : IPokemonRepository
         _dbContext = dbContext;
     }
 
-    public async Task<IEnumerable<PokemonBaseDto>> GetAll()
+    public async Task<IEnumerable<PokemonBase>> GetAll()
     {
         var query = @"
 SELECT
@@ -34,9 +34,9 @@ FROM
 
         using var connection = _dbContext.CreateConnection();
 
-        var values = await connection.QueryAsync<PokemonBaseDto, PokemonTypeDto, PokemonBaseDto>(query, (pokemon, type) =>
+        var values = await connection.QueryAsync<PokemonBase, PokemonType, PokemonBase>(query, (pokemon, type) =>
         {
-            pokemon.Types ??= new List<PokemonTypeDto>();
+            pokemon.Types ??= new List<PokemonType>();
             pokemon.Types.Add(type);
             return pokemon;
         },
@@ -50,7 +50,102 @@ FROM
         }).ToList();
     }
 
-    public async Task<IEnumerable<AttackDto>> GetAttacks(int pokemonId)
+    public async Task<PokemonFull> GetFull(int pokemonId)
+    {
+        var query = @"
+SELECT
+		pokemon.numero_pokedex		AS PokemonId,
+		pokemon.nombre				AS Name,
+		altura						AS Height,
+		peso						AS Weight,
+		estadisticas_base.PS		AS PS,
+		estadisticas_base.ataque	AS Attack,
+		estadisticas_base.defensa   AS Defense,
+		estadisticas_base.especial  AS Special,
+		estadisticas_base.velocidad AS Speed,
+		tipo.id_tipo				AS TypeId,
+		tipo.nombre					AS TypeName
+FROM
+		pokemon
+	INNER JOIN
+		pokemon_tipo
+			ON pokemon.numero_pokedex = pokemon_tipo.numero_pokedex
+	INNER JOIN
+		tipo
+			ON pokemon_tipo.id_tipo = tipo.id_tipo
+	INNER JOIN
+		estadisticas_base
+			ON estadisticas_base.numero_pokedex = pokemon.numero_pokedex
+WHERE
+		pokemon.numero_pokedex = @pokemonId";
+
+        using var connection = _dbContext.CreateConnection();
+
+        var values = (await connection.QueryAsync<PokemonFull, PokemonType, PokemonFull>(query, (pokemon, type) =>
+			 {
+				 pokemon.Types ??= new List<PokemonType>();
+				 pokemon.Types.Add(type);
+				 return pokemon;
+			 },
+			 new { pokemonId },
+			 splitOn: "TypeId"));
+
+
+        var full = values.GroupBy(p => p.PokemonId).Select(g =>
+        {
+            var group = g.First();
+            group.Types = g.Select(p => p.Types.Single()).ToList();
+            return group;
+        }).Single();
+
+        full.Attacks = await GetAttacks(pokemonId);
+        full.Evolutions = await GetEvolutions(pokemonId);
+		full.EvolutionsFlow = await GetEvolutionFlow(pokemonId);
+        full.InvolutionsFlow = await GetInvolutionFlow(pokemonId);
+
+        return full;
+    }
+
+    public async Task<PokemonBase> GetBase(int pokemonId)
+    {
+        var query = @"
+SELECT
+		pokemon.numero_pokedex AS PokemonId,
+		pokemon.nombre		   AS Name,
+		altura				   AS Height,
+		peso				   AS Weight,
+		tipo.id_tipo		   AS TypeId,
+		tipo.nombre			   AS TypeName
+FROM
+		pokemon
+	INNER JOIN
+		pokemon_tipo
+			ON pokemon.numero_pokedex = pokemon_tipo.numero_pokedex
+	INNER JOIN
+		tipo
+			ON pokemon_tipo.id_tipo = tipo.id_tipo
+WHERE pokemon.numero_pokedex = @pokemonId";
+
+        using var connection = _dbContext.CreateConnection();
+
+        var values = await connection.QueryAsync<PokemonBase, PokemonType, PokemonBase>(query, (pokemon, type) =>
+        {
+            pokemon.Types ??= new List<PokemonType>();
+            pokemon.Types.Add(type);
+            return pokemon;
+        },
+		new { pokemonId },
+        splitOn: "TypeId");
+
+        return values.GroupBy(p => p.PokemonId).Select(g =>
+        {
+            var group = g.First();
+            group.Types = g.Select(p => p.Types.Single()).ToList();
+            return group;
+        }).Single();
+    }
+
+    private async Task<IEnumerable<Attack>> GetAttacks(int pokemonId)
     {
         var query = @"
 SELECT
@@ -83,7 +178,7 @@ WHERE
 
         using var connection = _dbContext.CreateConnection();
 
-        return await connection.QueryAsync<AttackDto, AttackTypeDto, AttackDto>(query, (attack, type) =>
+        return await connection.QueryAsync<Attack, AttackType, Attack>(query, (attack, type) =>
         {
             attack.Type = type;
             return attack;
@@ -92,7 +187,7 @@ WHERE
         splitOn: "TypeId");
     }
 
-    public async Task<IEnumerable<EvolutionDto>> GetEvolutions(int pokemonId)
+    private async Task<IEnumerable<Evolution>> GetEvolutions(int pokemonId)
     {
         var query = @"
 SELECT
@@ -125,7 +220,7 @@ WHERE
 
         using var connection = _dbContext.CreateConnection();
 
-        return await connection.QueryAsync<EvolutionDto, EvolutionTypeDto, EvolutionDto>(query, (evolution, type) =>
+        return await connection.QueryAsync<Evolution, EvolutionType, Evolution>(query, (evolution, type) =>
         {
             evolution.Type = type;
             return evolution;
@@ -134,49 +229,75 @@ WHERE
         splitOn: "TypeId");
     }
 
-    public async Task<PokemonFullDto> GetFull(int pokemonId)
-    {
+	private async Task<IEnumerable<EvolutionFlow>> GetEvolutionFlow(int pokemonId)
+	{
+        int order = 1;
+        List<EvolutionFlow> flows = new();
+
         var query = @"
 SELECT
-		pokemon.numero_pokedex		AS PokemonId,
-		pokemon.nombre				AS Name,
-		altura						AS Height,
-		peso						AS Weight,
-		estadisticas_base.PS		AS PS,
-		estadisticas_base.ataque	AS Attack,
-		estadisticas_base.defensa   AS Defense,
-		estadisticas_base.especial  AS Special,
-		estadisticas_base.velocidad AS Speed,
-		tipo.id_tipo				AS TypeId,
-		tipo.nombre					AS TypeName
+	  evolucion.pokemon_evolucionado AS PokemonId
 FROM
 		pokemon
 	INNER JOIN
-		pokemon_tipo
-			ON pokemon.numero_pokedex = pokemon_tipo.numero_pokedex
-	INNER JOIN
-		tipo
-			ON pokemon_tipo.id_tipo = tipo.id_tipo
-	INNER JOIN
-		estadisticas_base
-			ON estadisticas_base.numero_pokedex = pokemon.numero_pokedex
+		evoluciona_de AS evolucion
+			ON pokemon.numero_pokedex = evolucion.pokemon_origen
 WHERE
 		pokemon.numero_pokedex = @pokemonId";
 
         using var connection = _dbContext.CreateConnection();
 
-        var full = (await connection.QueryAsync<PokemonFullDto, PokemonTypeDto, PokemonFullDto>(query, (pokemon, type) =>
-			 {
-				 pokemon.Types ??= new List<PokemonTypeDto>();
-				 pokemon.Types.Add(type);
-				 return pokemon;
-			 },
-			 new { pokemonId },
-			 splitOn: "TypeId")).First();
+        int targetId;
+        while ((targetId = await connection.QueryFirstOrDefaultAsync<int>(query, new { pokemonId })) != 0)
+        {
+            flows.Add(new EvolutionFlow
+            {
+                Order = order,
+                Pokemon = await GetBase(targetId)
+            });
 
-        full.Attacks = await GetAttacks(pokemonId);
-        full.Evolutions = await GetEvolutions(pokemonId);
+			pokemonId = targetId;
+			order++;	
+        }
 
-        return full;
+        return flows;
+    }
+
+
+    private async Task<IEnumerable<EvolutionFlow>> GetInvolutionFlow(int pokemonId)
+    {
+        int order = 1;
+        List<EvolutionFlow> flows = new();
+
+        var query = @"
+SELECT
+		involucion.pokemon_origen	AS PokemonId
+FROM
+		pokemon
+	INNER JOIN
+		evoluciona_de AS involucion
+			ON pokemon.numero_pokedex = involucion.pokemon_evolucionado
+WHERE
+		pokemon.numero_pokedex = @pokemonId";
+
+
+        using var connection = _dbContext.CreateConnection();
+
+        int targetId;
+        while ((targetId = await connection.QueryFirstOrDefaultAsync<int>(query, new { pokemonId })) != 0)
+        {
+            flows.Add(new EvolutionFlow
+            {
+                Order = order,
+                Pokemon = await GetBase(targetId)
+            });
+
+            pokemonId = targetId;
+            order++;
+        }
+
+        return flows;
+
+
     }
 }

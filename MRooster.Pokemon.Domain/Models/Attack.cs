@@ -1,6 +1,6 @@
-﻿namespace MRooster.Pokemon.Domain.DTOs;
+﻿namespace MRooster.Pokemon.Domain.Models;
 
-public class AttackDto
+public class Attack
 {
     public int AttackId { get; set; }
     public string Name { get; set; }
@@ -9,5 +9,5 @@ public class AttackDto
     public int Precision { get; set; }
     public int PP { get; set; }
     public int Priority { get; set; }
-    public AttackTypeDto Type { get; set; }
+    public AttackType Type { get; set; }
 }
