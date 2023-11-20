@@ -1,6 +1,4 @@
 
-select * from pokemon
-
 --POKEMON LIST WITH TYPE
 SELECT
 		pokemon.numero_pokedex AS PokemonId,
@@ -107,3 +105,37 @@ FROM
 			ON piedra.id_tipo_piedra = tipo_piedra.id_tipo_piedra
 WHERE
 		pokemon.numero_pokedex = 1
+
+
+
+--POKEMON EVOLUTION
+SELECT
+		PokemonEvolucionado.numero_pokedex AS PokemonId,
+		PokemonEvolucionado.nombre
+FROM
+		pokemon
+	INNER JOIN
+		evoluciona_de AS evolucion
+			ON pokemon.numero_pokedex = evolucion.pokemon_origen
+	INNER JOIN
+		pokemon AS PokemonEvolucionado
+			ON PokemonEvolucionado.numero_pokedex = evolucion.pokemon_evolucionado
+WHERE
+		pokemon.numero_pokedex = 1
+
+
+
+--POKEMON INVOLUTION
+SELECT
+		PokemonInvolucionado.numero_pokedex AS PokemonId,
+		PokemonInvolucionado.nombre
+FROM
+		pokemon
+	INNER JOIN
+		evoluciona_de AS involucion
+			ON pokemon.numero_pokedex = involucion.pokemon_evolucionado
+	INNER JOIN
+		pokemon PokemonInvolucionado
+			ON PokemonInvolucionado.numero_pokedex = involucion.pokemon_origen
+WHERE
+		pokemon.numero_pokedex = 3
