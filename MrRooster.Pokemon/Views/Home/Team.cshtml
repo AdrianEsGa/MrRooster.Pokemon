@@ -1,0 +1,24 @@
+﻿@model TeamViewModel
+
+@{
+    ViewData["Title"] = "Team";
+}
+
+<h1> Predominante: @Model.Predominant.TypeName </h1>
+
+@foreach (var pokemon in Model.Team.Pokemons)
+{
+    <h1> Pokemon: @pokemon.Name </h1>
+}
+
+<h1> Weight Average: @{
+        @Model.WeightAverage
+    } </h1>
+<h1>
+    Height Average: @{
+        @Model.HeightAverage
+    }
+</h1>
+
+<h1> Count: @Model.Count </h1>
+

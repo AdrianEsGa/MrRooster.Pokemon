@@ -13,6 +13,40 @@ public class PokemonRepository : IPokemonRepository
         _dbContext = dbContext;
     }
 
+    public async Task<IEnumerable<PokemonBase>> GetAll_New()
+    {
+        var queryPokemon = @"
+SELECT
+		pokemon.numero_pokedex AS PokemonId,
+		pokemon.nombre		   AS Name,
+		altura				   AS Height,
+		peso				   AS Weight
+FROM
+		pokemon";
+
+        var queryTipos = @"
+SELECT
+		tipo.id_tipo		   AS TypeId,
+		tipo.nombre			   AS TypeName
+FROM 
+    pokemon_tipo
+	   INNER JOIN
+		  tipo
+			ON pokemon_tipo.id_tipo = tipo.id_tipo
+    WHERE pokemon_tipo.numero_pokedex = @pokemonId";
+
+        using var connection = _dbContext.CreateConnection();
+
+        var values = await connection.QueryAsync<PokemonBase>(queryPokemon);
+
+		foreach (var value in values) 
+		{
+            value.Types = (await connection.QueryAsync<PokemonType>(queryTipos, new { value.PokemonId })).ToList();
+        }
+
+		return values;
+    }
+
     public async Task<IEnumerable<PokemonBase>> GetAll()
     {
         var query = @"
@@ -262,7 +296,6 @@ WHERE
 
         return flows;
     }
-
 
     private async Task<IEnumerable<EvolutionFlow>> GetInvolutionFlow(int pokemonId)
     {

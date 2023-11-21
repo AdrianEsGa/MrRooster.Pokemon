@@ -7,4 +7,5 @@ public interface IPokemonRepository
     Task<IEnumerable<PokemonBase>> GetAll();
     Task<PokemonFull> GetFull(int pokemonId);
     Task<PokemonBase> GetBase(int pokemonId);
+    Task<IEnumerable<PokemonBase>> GetAll_New();
 }

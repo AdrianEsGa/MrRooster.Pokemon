@@ -15,6 +15,7 @@ builder.Services.AddSingleton<PokemonDbContext>();
 
 //Add repositories
 builder.Services.AddScoped<IPokemonRepository, PokemonRepository>();
+builder.Services.AddSingleton<ITeamRepository, TeamRepository>();
 
 var app = builder.Build();
 

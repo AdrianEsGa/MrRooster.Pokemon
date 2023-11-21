@@ -1,27 +1,44 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MRooster.Pokemon.Domain.Abstractions;
+using MRooster.Pokemon.Domain.Models;
 using MrRooster.Pokemon.Models;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace MrRooster.Pokemon.Controllers
 {
     public class HomeController : Controller
     {
         private readonly IPokemonRepository _pokemonRepository;
+        private readonly ITeamRepository _teamRepository;
 
         private readonly ILogger<HomeController> _logger;
   
-        public HomeController(ILogger<HomeController> logger, IPokemonRepository pokemonRepository)
+        public HomeController(ILogger<HomeController> logger, 
+            IPokemonRepository pokemonRepository, 
+            ITeamRepository teamRepository)
         {
             _pokemonRepository = pokemonRepository;
+            _teamRepository = teamRepository;
             _logger = logger;
         }
 
         public async Task<IActionResult> Index()
         {
             var list = await _pokemonRepository.GetAll();
+            var list2 = await _pokemonRepository.GetAll_New();
 
-            var full = await _pokemonRepository.GetFull(3);
+            var full = await _pokemonRepository.GetFull(2);
+
+            var pokemon1 = await _pokemonRepository.GetBase(1);
+            var pokemon2 = await _pokemonRepository.GetBase(2);
+            var pokemon3 = await _pokemonRepository.GetBase(3);
+
+            _teamRepository.Add(pokemon1);
+            _teamRepository.Add(pokemon2);
+            _teamRepository.Add(pokemon3);
+
+            var myTeam = _teamRepository.GetMyTeam();
 
             return View();
         }
@@ -29,6 +46,40 @@ namespace MrRooster.Pokemon.Controllers
         public IActionResult Privacy()
         {
             return View();
+        }
+
+        [Route("/team/{type?}")]
+        public async Task<IActionResult> Team(string type)
+        {
+            var team = new Team();
+
+            if(type == "myteam")
+            {
+                team = _teamRepository.GetMyTeam();
+            }
+            else
+            {    
+                var allPokemon = await _pokemonRepository.GetAll();
+                team = _teamRepository.GetRandomTeam(allPokemon.ToList());
+            }
+
+            var predominant = team.Pokemons
+                   .SelectMany(pokemon => pokemon.Types)
+                   .GroupBy(type => type)
+                   .OrderByDescending(group => group.Count())
+                   .Select(grupo => grupo.Key)
+                   .First();
+
+            var viewModel = new TeamViewModel
+            {
+                Team = team,
+                Predominant = predominant,
+                HeightAverage = team.Pokemons.Sum(x => x.Height) / team.Pokemons.Count,
+                WeightAverage = team.Pokemons.Sum(x => x.Weight) / team.Pokemons.Count,
+                Count = team.Pokemons.Count
+            };
+
+            return View(viewModel);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
