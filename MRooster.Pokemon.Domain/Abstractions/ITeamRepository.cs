@@ -6,5 +6,5 @@ public interface ITeamRepository
 {
     bool Add(PokemonBase pokemon);
     Team GetMyTeam();
-    Team GetRandomTeam(List<PokemonBase> allPokemons);
+    Team GetRandomTeam(List<PokemonBase> allPokemons, int? maxPokemon = null);
 }

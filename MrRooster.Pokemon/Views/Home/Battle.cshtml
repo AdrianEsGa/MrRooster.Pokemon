@@ -1,0 +1,36 @@
+﻿@model BattleViewModel
+
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+<h1>Pokemon Battle</h1>
+
+@if (Model.Battle != null)
+{
+    <h2> Team One </h2>
+    foreach (var pokemon in Model.Battle.TeamOne.Pokemons)
+    {
+        <h2> @pokemon.Name - @string.Join("-", @pokemon.Types)</h2>
+    }
+
+    <h2> Team Two </h2>
+    foreach (var pokemon in Model.Battle.TeamTwo.Pokemons)
+    {
+        <h2> @pokemon.Name - @string.Join("-", @pokemon.Types)</h2>
+    }
+
+    <h2> Combats</h2>
+    foreach (var combat in Model.Battle.Combats)
+    {
+        <h2> Combat: @combat.Winner.Name </h2>
+    }
+}
+
+<form asp-action="StartRandomBattle" method="post">
+    <button type="submit">Start random battle</button>
+</form>
+
+<form asp-action="StartMyTeamBattle" method="post">
+    <button type="submit">Start my team battle</button>
+</form>
+

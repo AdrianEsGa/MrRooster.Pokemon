@@ -30,7 +30,7 @@ public class TeamRepository : ITeamRepository
         return _myTeam;
     }
 
-    public Team GetRandomTeam(List<PokemonBase> allPokemons)
+    public Team GetRandomTeam(List<PokemonBase> allPokemons, int? maxPokemon = null)
     {
         Team team = new()
         {
@@ -39,7 +39,9 @@ public class TeamRepository : ITeamRepository
 
         Random random = new();
 
-        for (int i = 0; i < _maxTeamPokemons; i++)
+        var max = maxPokemon ?? _maxTeamPokemons;
+
+        for (int i = 0; i < max; i++)
         {
             var index = random.Next(allPokemons.Count);
             team.Pokemons.Add(allPokemons[index]);
